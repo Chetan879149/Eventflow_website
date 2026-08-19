@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account - EventFlow</title>
+  <script>
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      theme: { extend: {
+        colors: { primary: { 400:'#c084fc',500:'#a855f7',600:'#9333ea' }, accent:{400:'#f472b6',500:'#ec4899',600:'#db2777'} },
+        fontFamily: { sans:['Inter','system-ui','sans-serif'] },
+        animation: { 'slide-up':'slideUp 0.5s ease-out' }
+      }}
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root { color-scheme: dark; background-color:#0f0f23; }
+    html,body { min-height:100vh; margin:0; padding:0; }
+    body { background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f0f23 100%) !important; background-attachment:fixed !important; color:#fff !important; }
+    .glass-card { background:rgba(255,255,255,.05) !important; border-color:rgba(255,255,255,.1) !important; }
+    .btn-primary { background:linear-gradient(135deg,#a855f7 0%,#ec4899 100%) !important; color:#fff !important; }
+    .input-glow:focus { box-shadow:0 0 0 4px rgba(168,85,247,.25),0 0 0 1px rgba(236,72,153,.25) !important; }
+  </style>
+</head>
+<body class="gradient-bg text-white font-sans overflow-x-hidden">
+  <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="blob w-96 h-96 bg-primary-600 top-20 -left-48" style="animation-delay:0s"></div>
+    <div class="blob w-80 h-80 bg-accent-500 top-1/2 -right-40" style="animation-delay:2s"></div>
+    <div class="blob w-72 h-72 bg-primary-500 bottom-20 left-1/3" style="animation-delay:4s"></div>
+  </div>
+
+  <a href="/login.html" class="fixed top-5 left-5 z-50 px-4 py-2 rounded-full glass-card text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors">
+    <i class="fas fa-arrow-left mr-2"></i>Back to Login
+  </a>
+
+  <div class="relative z-10 min-h-screen flex items-center justify-center p-4 py-16">
+    <div class="glass-card rounded-3xl p-8 max-w-2xl w-full animate-slide-up">
+      <div class="flex items-center justify-center mb-5">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+          <i class="fas fa-user-plus"></i>
+        </div>
+      </div>
+      <h1 class="text-3xl font-extrabold text-center mb-2">Create your account</h1>
+      <p class="text-gray-400 text-center mb-7">Join EventFlow and start managing your events with ease.</p>
+      <div id="createAccountError" class="hidden mb-4 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-red-100 text-sm"></div>
+      <div id="createAccountSuccess" class="hidden mb-4 rounded-2xl border border-green-400/20 bg-green-500/10 px-4 py-3 text-green-100 text-sm"></div>
+
+      <form id="createAccountForm" class="space-y-4" autocomplete="off">
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium mb-2">First Name *</label><input id="registerFirstName" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="John" required></div>
+          <div><label class="block text-sm font-medium mb-2">Last Name *</label><input id="registerLastName" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Doe" required></div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium mb-2">Username</label><input id="registerUsername" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="johndoe"></div>
+          <div><label class="block text-sm font-medium mb-2">Phone</label><input id="registerPhone" type="tel" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="+1 555 123 4567"></div>
+        </div>
+        <div><label class="block text-sm font-medium mb-2">Location</label><input id="registerLocation" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="City, Country"></div>
+        <div><label class="block text-sm font-medium mb-2">Email *</label><input id="registerEmail" type="email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="you@example.com" required></div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium mb-2">Password *</label><input id="registerPassword" type="password" minlength="8" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="At least 8 characters" required></div>
+          <div><label class="block text-sm font-medium mb-2">Confirm Password *</label><input id="registerConfirmPassword" type="password" minlength="8" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Repeat your password" required></div>
+        </div>
+        <label class="flex items-start gap-2 text-sm text-gray-400">
+          <input id="registerTerms" type="checkbox" class="mt-1 rounded" required>
+          <span>I agree to the Terms of Service and Privacy Policy.</span>
+        </label>
+        <button type="submit" id="createAccountButton" class="w-full btn-primary py-3 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"><span>Create Account</span></button>
+      </form>
+
+      <div class="mt-6 text-center">
+        <span class="text-gray-400 text-sm">Already have an account?</span>
+        <a href="/login.html" class="text-primary-400 hover:underline ml-1 text-sm font-semibold">Login</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('createAccountForm');
+    const errorEl = document.getElementById('createAccountError');
+    const successEl = document.getElementById('createAccountSuccess');
+    const button = document.getElementById('createAccountButton');
+    const value = id => document.getElementById(id).value.trim();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorEl.classList.add('hidden');
+      successEl.classList.add('hidden');
+      const firstName=value('registerFirstName'), lastName=value('registerLastName'), email=value('registerEmail');
+      const username=value('registerUsername'), phone=value('registerPhone'), location=value('registerLocation');
+      const password=document.getElementById('registerPassword').value;
+      const confirm=document.getElementById('registerConfirmPassword').value;
+      if (password.length < 8) { errorEl.textContent='Password must be at least 8 characters long.'; errorEl.classList.remove('hidden'); return; }
+      if (password !== confirm) { errorEl.textContent='Passwords do not match.'; errorEl.classList.remove('hidden'); return; }
+      if (!document.getElementById('registerTerms').checked) { errorEl.textContent='Please accept the terms to continue.'; errorEl.classList.remove('hidden'); return; }
+      button.disabled=true; button.classList.add('opacity-70', 'cursor-not-allowed'); button.querySelector('span').textContent='Creating Account...';
+      try {
+        const response=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({firstName,lastName,email,password,username,phone,location})});
+        const payload=await response.json().catch(()=>({}));
+        if(!response.ok) throw new Error(payload.error || 'Unable to create the account.');
+        successEl.textContent='Account created successfully. Redirecting you to the login page...';
+        successEl.classList.remove('hidden');
+        form.reset();
+        setTimeout(()=>window.location.href='/login.html?registered=1',900);
+      } catch(error) {
+        errorEl.textContent=error.message || 'Unable to create the account.';
+        errorEl.classList.remove('hidden');
+      } finally {
+        button.disabled=false; button.classList.remove('opacity-70', 'cursor-not-allowed'); button.querySelector('span').textContent='Create Account';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventFlow - Modern Event Management</title>
+    <script>
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#faf5ff',
+                            100: '#f3e8ff',
+                            200: '#e9d5ff',
+                            300: '#d8b4fe',
+                            400: '#c084fc',
+                            500: '#a855f7',
+                            600: '#9333ea',
+                            700: '#7c3aed',
+                            800: '#6b21a8',
+                            900: '#581c87',
+                        },
+                        accent: {
+                            400: '#f472b6',
+                            500: '#ec4899',
+                            600: '#db2777',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'fade-in': 'fadeIn 0.6s ease-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="gradient-bg text-white font-sans overflow-x-hidden">
+
+    <!-- Animated Background Blobs -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="blob w-96 h-96 bg-primary-600 top-20 -left-48" style="animation-delay: 0s;"></div>
+        <div class="blob w-80 h-80 bg-accent-500 top-1/2 -right-40" style="animation-delay: 2s;"></div>
+        <div class="blob w-72 h-72 bg-primary-500 bottom-20 left-1/3" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <a href="index.html" class="flex items-center space-x-3 navbar-brand">
+                    <div class="navbar-logo">
+                        <img src="logo.png" alt="Datoway Technology">
+                    </div>
+
+                    <span class="text-2xl font-bold gradient-text">
+                        EventFlow
+                    </span>
+                </a>
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#home" class="nav-link text-gray-300 hover:text-white transition-colors">Home</a>
+                    <a href="#events" class="nav-link text-gray-300 hover:text-white transition-colors">Events</a>
+                    <a href="#features" class="nav-link text-gray-300 hover:text-white transition-colors">Features</a>
+                    <a href="#pricing" class="nav-link text-gray-300 hover:text-white transition-colors">Pricing</a>
+                    <a href="#contact" class="nav-link text-gray-300 hover:text-white transition-colors">Contact</a>
+                </div>
+
+                <!-- Authenticated user menu: login/register are handled before entering index.html -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <div id="navUserMenu" class="hidden relative">
+                            <button id="navUserInitialBtn" type="button" class="px-4 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-colors font-semibold flex items-center justify-center">
+                                <span id="navUserInitial">U</span>
+                            </button>
+                            <div id="navUserDropdown" class="hidden absolute right-0 mt-3 w-40 glass-card rounded-xl border border-white/10 overflow-hidden">
+                                <button type="button" id="navProfileBtn" class="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors text-gray-200 flex items-center gap-3">
+                                    <i class="fas fa-user-circle"></i>
+                                    <span>Profile</span>
+                                </button>
+                                <button type="button" id="navLogoutBtn" class="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors text-red-200 flex items-center gap-3">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden glass-card mx-4 mt-2 rounded-2xl overflow-hidden">
+            <div class="p-4 space-y-3">
+                <a href="#home" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">Home</a>
+                <a href="#events" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">Events</a>
+                <a href="#features" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">Features</a>
+                <a href="#pricing" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">Pricing</a>
+                <a href="#contact" class="block px-4 py-2 rounded-lg hover:bg-white/10 transition-colors">Contact</a>
+                <div class="pt-3 border-t border-white/10 space-y-2">
+                    <div id="authSignedInButtonsMobile" class="hidden space-y-2">
+                        <button type="button" id="mobileProfileBtn" data-open-modal="profileModal" class="w-full px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 hover:bg-white/20 transition-colors font-semibold text-left flex items-center gap-3">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Profile</span>
+                        </button>
+                        <button id="mobileLogoutBtn" type="button" class="w-full px-4 py-2.5 rounded-lg border border-white/20 text-red-200 hover:bg-white/10 transition-colors text-left flex items-center gap-3">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Hero Content -->
+                <div class="space-y-8 animate-fade-in">
+                    <div class="inline-flex items-center px-4 py-2 rounded-full glass-card text-sm">
+                        <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                        <span class="text-gray-300">Trusted by 10,000+ Event Organizers</span>
+                    </div>
+                    
+                    <h1 class="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight">
+                        Create <span class="gradient-text">Unforgettable</span> Events
+                    </h1>
+                    
+                    <p class="text-xl text-gray-400 max-w-lg">
+                        The all-in-one platform to plan, manage, and execute stunning events that leave lasting impressions.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button type="button" data-open-modal="createEventModal" class="btn-primary px-8 py-4 rounded-full font-semibold text-lg flex items-center justify-center space-x-2">
+                            <span>Create Event</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button type="button" data-scroll-target="events" class="px-8 py-4 rounded-full font-semibold text-lg border border-white/20 hover:bg-white/10 transition-colors flex items-center justify-center space-x-2">
+                            <i class="fas fa-play-circle"></i>
+                            <span>Explore Events</span>
+                        </button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 gap-8 pt-8 border-t border-white/10">
+                        <div>
+                            <div class="text-3xl font-bold gradient-text counter" data-target="500">0</div>
+                            <div class="text-gray-400 text-sm">Events Monthly</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold gradient-text counter" data-target="50">0</div>
+                            <div class="text-gray-400 text-sm">Countries</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold gradient-text counter" data-target="98">0</div>
+                            <div class="text-gray-400 text-sm">% Satisfaction</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Image/Illustration -->
+                <div class="relative animate-float hidden lg:block">
+                    <div class="relative">
+                        <!-- Main Card -->
+                        <div class="glass-card rounded-3xl p-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                            <div class="aspect-video rounded-2xl bg-gradient-to-br from-primary-600/50 to-accent-500/50 flex items-center justify-center overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop" alt="Event" class="w-full h-full object-cover opacity-80">
+                            </div>
+                            <div class="mt-4 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg font-semibold">Tech Conference 2024</span>
+                                    <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">Live</span>
+                                </div>
+                                <div class="flex items-center text-gray-400 text-sm space-x-4">
+                                    <span><i class="fas fa-calendar mr-1"></i> Dec 15</span>
+                                    <span><i class="fas fa-map-marker-alt mr-1"></i> San Francisco</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Floating Cards -->
+                        <div class="absolute -top-8 -right-8 glass-card rounded-2xl p-4 transform -rotate-6 animate-float" style="animation-delay: 1s;">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                                    <i class="fas fa-check text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="font-semibold">2,500+</div>
+                                    <div class="text-xs text-gray-400">Attendees</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="absolute -bottom-4 -left-8 glass-card rounded-2xl p-4 transform rotate-6 animate-float" style="animation-delay: 2s;">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex -space-x-2">
+                                    <img src="https://i.pravatar.cc/40?img=1" class="w-8 h-8 rounded-full border-2 border-white/20">
+                                    <img src="https://i.pravatar.cc/40?img=2" class="w-8 h-8 rounded-full border-2 border-white/20">
+                                    <img src="https://i.pravatar.cc/40?img=3" class="w-8 h-8 rounded-full border-2 border-white/20">
+                                </div>
+                                <span class="text-sm text-gray-300">+120 joined</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <a href="#events" class="flex flex-col items-center text-gray-400 hover:text-white transition-colors">
+                <span class="text-sm mb-2">Scroll to explore</span>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+        </div>
+    </section>
+
+    <!-- Events Section -->
+    <section id="events" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="inline-block px-4 py-1 rounded-full glass-card text-primary-400 text-sm font-medium mb-4">
+                    Upcoming Events
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                    Discover <span class="gradient-text">Amazing</span> Events
+                </h2>
+                <p class="text-gray-400 text-lg">
+                    Explore curated events from around the world. From tech conferences to music festivals, find your next experience.
+                </p>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="flex flex-wrap justify-center gap-3 mb-12">
+                <button class="filter-btn active px-6 py-2.5 rounded-full glass-card hover:bg-white/10 transition-all" data-filter="all">
+                    All Events
+                </button>
+                <button class="filter-btn px-6 py-2.5 rounded-full glass-card hover:bg-white/10 transition-all" data-filter="conference">
+                    <i class="fas fa-microphone-alt mr-2"></i>Conferences
+                </button>
+                <button class="filter-btn px-6 py-2.5 rounded-full glass-card hover:bg-white/10 transition-all" data-filter="music">
+                    <i class="fas fa-music mr-2"></i>Music
+                </button>
+                <button class="filter-btn px-6 py-2.5 rounded-full glass-card hover:bg-white/10 transition-all" data-filter="workshop">
+                    <i class="fas fa-laptop-code mr-2"></i>Workshops
+                </button>
+                <button class="filter-btn px-6 py-2.5 rounded-full glass-card hover:bg-white/10 transition-all" data-filter="sports">
+                    <i class="fas fa-running mr-2"></i>Sports
+                </button>
+            </div>
+
+            <!-- Events Grid -->
+            <div id="eventsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Event Card 1 -->
+                <div class="event-card glass-card rounded-3xl overflow-hidden hover-lift" data-category="conference" data-event-id="1" data-event-title="Global Tech Summit 2024" data-event-date="December 20, 2024" data-event-time="9:00 AM" data-event-location="San Francisco, CA" data-event-description="Join industry leaders and innovators for the biggest tech event of the year." data-event-price="$299" data-event-image="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=250&fit=crop" data-event-attendees="2,500+ registered">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=250&fit=crop" alt="Tech Summit" class="w-full h-56 object-cover">
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 bg-primary-500 rounded-full text-sm font-medium">Conference</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/20 transition-colors bookmark-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <i class="fas fa-calendar mr-2 text-primary-400"></i>
+                            <span>December 20, 2024</span>
+                            <span class="mx-2">•</span>
+                            <span>9:00 AM</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 hover:text-primary-400 transition-colors cursor-pointer">
+                            Global Tech Summit 2024
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">
+                            Join industry leaders and innovators for the biggest tech event of the year.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-accent-400 mr-2"></i>
+                                <span class="text-sm text-gray-300">San Francisco, CA</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">From</div>
+                                <div class="text-lg font-bold text-primary-400">$299</div>
+                            </div>
+                        </div>
+                        <button type="button" data-open-modal="eventDetailModal" class="w-full mt-4 py-3 rounded-xl border border-primary-500 text-primary-400 font-semibold hover:bg-primary-500 hover:text-white transition-all">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Card 2 -->
+                <div class="event-card glass-card rounded-3xl overflow-hidden hover-lift" data-category="music" data-event-id="2" data-event-title="Neon Nights Music Festival" data-event-date="January 5-7, 2025" data-event-time="6:00 PM" data-event-location="Las Vegas, NV" data-event-description="Three days of non-stop music featuring world-renowned artists and DJs." data-event-price="$149" data-event-image="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=250&fit=crop" data-event-attendees="50,000+ attendees">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=250&fit=crop" alt="Music Festival" class="w-full h-56 object-cover">
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 bg-accent-500 rounded-full text-sm font-medium">Music</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/20 transition-colors bookmark-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <i class="fas fa-calendar mr-2 text-primary-400"></i>
+                            <span>January 5-7, 2025</span>
+                            <span class="mx-2">•</span>
+                            <span>6:00 PM</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 hover:text-primary-400 transition-colors cursor-pointer">
+                            Neon Nights Music Festival
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">
+                            Three days of non-stop music featuring world-renowned artists and DJs.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-accent-400 mr-2"></i>
+                                <span class="text-sm text-gray-300">Las Vegas, NV</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">From</div>
+                                <div class="text-lg font-bold text-primary-400">$149</div>
+                            </div>
+                        </div>
+                        <button type="button" data-open-modal="eventDetailModal" class="w-full mt-4 py-3 rounded-xl border border-primary-500 text-primary-400 font-semibold hover:bg-primary-500 hover:text-white transition-all">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Card 3 -->
+                <div class="event-card glass-card rounded-3xl overflow-hidden hover-lift" data-category="workshop" data-event-id="3" data-event-title="UI/UX Design Masterclass" data-event-date="December 28, 2024" data-event-time="10:00 AM" data-event-location="Online Event" data-event-description="Learn cutting-edge design techniques from industry experts." data-event-price="$79" data-event-image="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&h=250&fit=crop" data-event-attendees="500+ seats">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&h=250&fit=crop" alt="Workshop" class="w-full h-56 object-cover">
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 bg-blue-500 rounded-full text-sm font-medium">Workshop</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/20 transition-colors bookmark-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <i class="fas fa-calendar mr-2 text-primary-400"></i>
+                            <span>December 28, 2024</span>
+                            <span class="mx-2">•</span>
+                            <span>10:00 AM</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 hover:text-primary-400 transition-colors cursor-pointer">
+                            UI/UX Design Masterclass
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">
+                            Learn cutting-edge design techniques from industry experts.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-accent-400 mr-2"></i>
+                                <span class="text-sm text-gray-300">Online Event</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">From</div>
+                                <div class="text-lg font-bold text-primary-400">$79</div>
+                            </div>
+                        </div>
+                        <button type="button" data-open-modal="eventDetailModal" class="w-full mt-4 py-3 rounded-xl border border-primary-500 text-primary-400 font-semibold hover:bg-primary-500 hover:text-white transition-all">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Card 4 -->
+                <div class="event-card glass-card rounded-3xl overflow-hidden hover-lift" data-category="sports" data-event-id="4" data-event-title="City Marathon 2025" data-event-date="February 15, 2025" data-event-time="6:00 AM" data-event-location="New York, NY" data-event-description="Run through scenic routes and challenge yourself in the annual city marathon." data-event-price="$50" data-event-image="https://images.unsplash.com/photo-1461896836934-a2a0d8c0b1f2?w=400&h=250&fit=crop" data-event-attendees="20,000+ participants">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1461896836934-a2a0d8c0b1f2?w=400&h=250&fit=crop" alt="Marathon" class="w-full h-56 object-cover">
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 bg-green-500 rounded-full text-sm font-medium">Sports</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/20 transition-colors bookmark-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <i class="fas fa-calendar mr-2 text-primary-400"></i>
+                            <span>February 15, 2025</span>
+                            <span class="mx-2">•</span>
+                            <span>6:00 AM</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 hover:text-primary-400 transition-colors cursor-pointer">
+                            City Marathon 2025
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">
+                            Run through scenic routes and challenge yourself in the annual city marathon.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-accent-400 mr-2"></i>
+                                <span class="text-sm text-gray-300">New York, NY</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">From</div>
+                                <div class="text-lg font-bold text-primary-400">$50</div>
+                            </div>
+                        </div>
+                        <button type="button" data-open-modal="eventDetailModal" class="w-full mt-4 py-3 rounded-xl border border-primary-500 text-primary-400 font-semibold hover:bg-primary-500 hover:text-white transition-all">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Card 5 -->
+                <div class="event-card glass-card rounded-3xl overflow-hidden hover-lift" data-category="conference" data-event-id="5" data-event-title="Future of Business Summit" data-event-date="January 20, 2025" data-event-time="9:00 AM" data-event-location="London, UK" data-event-description="Explore emerging trends and network with business leaders worldwide." data-event-price="$399" data-event-image="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=250&fit=crop" data-event-attendees="3,000+ attendees">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=250&fit=crop" alt="Business Summit" class="w-full h-56 object-cover">
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 bg-primary-500 rounded-full text-sm font-medium">Conference</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/20 transition-colors bookmark-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <i class="fas fa-calendar mr-2 text-primary-400"></i>
+                            <span>January 20, 2025</span>
+                            <span class="mx-2">•</span>
+                            <span>9:00 AM</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 hover:text-primary-400 transition-colors cursor-pointer">
+                            Future of Business Summit
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">
+                            Explore emerging trends and network with business leaders worldwide.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-accent-400 mr-2"></i>
+                                <span class="text-sm text-gray-300">London, UK</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">From</div>
+                                <div class="text-lg font-bold text-primary-400">$399</div>
+                            </div>
+                        </div>
+                        <button type="button" data-open-modal="eventDetailModal" class="w-full mt-4 py-3 rounded-xl border border-primary-500 text-primary-400 font-semibold hover:bg-primary-500 hover:text-white transition-all">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Card 6 -->
+                <div class="event-card glass-card rounded-3xl overflow-hidden hover-lift" data-category="music" data-event-id="6" data-event-title="New Year's Eve Concert" data-event-date="December 31, 2024" data-event-time="10:00 PM" data-event-location="Miami, FL" data-event-description="Ring in the new year with an unforgettable live music experience." data-event-price="$199" data-event-image="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop" data-event-attendees="15,000+ attendees">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=250&fit=crop" alt="Concert" class="w-full h-56 object-cover">
+                        <div class="absolute top-4 left-4">
+                            <span class="px-3 py-1 bg-accent-500 rounded-full text-sm font-medium">Music</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/20 transition-colors bookmark-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-400 mb-3">
+                            <i class="fas fa-calendar mr-2 text-primary-400"></i>
+                            <span>December 31, 2024</span>
+                            <span class="mx-2">•</span>
+                            <span>10:00 PM</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 hover:text-primary-400 transition-colors cursor-pointer">
+                            New Year's Eve Concert
+                        </h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">
+                            Ring in the new year with an unforgettable live music experience.
+                        </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-accent-400 mr-2"></i>
+                                <span class="text-sm text-gray-300">Miami, FL</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-400">From</div>
+                                <div class="text-lg font-bold text-primary-400">$199</div>
+                            </div>
+                        </div>
+                        <button type="button" data-open-modal="eventDetailModal" class="w-full mt-4 py-3 rounded-xl border border-primary-500 text-primary-400 font-semibold hover:bg-primary-500 hover:text-white transition-all">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load More Button -->
+            <div class="text-center mt-12">
+                <button class="btn-primary px-8 py-4 rounded-full font-semibold inline-flex items-center space-x-2">
+                    <span>Load More Events</span>
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="inline-block px-4 py-1 rounded-full glass-card text-primary-400 text-sm font-medium mb-4">
+                    Why Choose Us
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                    Powerful <span class="gradient-text">Features</span> for Event Success
+                </h2>
+                <p class="text-gray-400 text-lg">
+                    Everything you need to create, manage, and grow your events—all in one platform.
+                </p>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift group">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center mb-6 group-hover:animate-glow">
+                        <i class="fas fa-calendar-plus text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Easy Event Creation</h3>
+                    <p class="text-gray-400">
+                        Create stunning event pages in minutes with our intuitive drag-and-drop builder. No coding required.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift group">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center mb-6 group-hover:animate-glow">
+                        <i class="fas fa-ticket-alt text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Smart Ticketing</h3>
+                    <p class="text-gray-400">
+                        Sell tickets with flexible pricing, early bird discounts, and secure payment processing.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift group">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mb-6 group-hover:animate-glow">
+                        <i class="fas fa-chart-line text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Real-Time Analytics</h3>
+                    <p class="text-gray-400">
+                        Track ticket sales, attendee engagement, and revenue with detailed dashboards and reports.
+                    </p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift group">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center mb-6 group-hover:animate-glow">
+                        <i class="fas fa-users text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Attendee Management</h3>
+                    <p class="text-gray-400">
+                        Manage registrations, send personalized communications, and check-in attendees seamlessly.
+                    </p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift group">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center mb-6 group-hover:animate-glow">
+                        <i class="fas fa-video text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Virtual & Hybrid Events</h3>
+                    <p class="text-gray-400">
+                        Host online events with live streaming, virtual networking, and interactive features.
+                    </p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift group">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center mb-6 group-hover:animate-glow">
+                        <i class="fas fa-mobile-alt text-2xl text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Mobile App</h3>
+                    <p class="text-gray-400">
+                        Give attendees a branded mobile experience with schedules, networking, and notifications.
+                    </p>
+                </div>
+            </div>
+
+            <!-- CTA Banner -->
+            <div class="mt-20 glass-card rounded-3xl p-8 md:p-12 overflow-hidden relative">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-primary-500 rounded-full filter blur-3xl opacity-20"></div>
+                <div class="absolute bottom-0 left-0 w-48 h-48 bg-accent-500 rounded-full filter blur-3xl opacity-20"></div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div>
+                        <h3 class="text-2xl md:text-3xl font-bold mb-3">Ready to create your event?</h3>
+                        <p class="text-gray-400">Start your free trial today. No credit card required.</p>
+                    </div>
+                    <button type="button" data-open-modal="createEventModal" class="btn-primary px-8 py-4 rounded-full font-semibold whitespace-nowrap">
+                        Create Event <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="inline-block px-4 py-1 rounded-full glass-card text-primary-400 text-sm font-medium mb-4">
+                    How It Works
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                    Create Events in <span class="gradient-text">3 Simple Steps</span>
+                </h2>
+            </div>
+
+            <!-- Steps -->
+            <div class="grid md:grid-cols-3 gap-8 relative">
+                <!-- Connection Lines -->
+                <div class="hidden md:block absolute top-24 left-1/3 right-1/3 h-0.5 bg-gradient-to-r from-primary-500 to-accent-500"></div>
+
+                <!-- Step 1 -->
+                <div class="text-center relative">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center mx-auto mb-6 text-2xl font-bold relative z-10">
+                        1
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Create Your Event</h3>
+                    <p class="text-gray-400">
+                        Set up your event details, customize your page, and configure ticket options.
+                    </p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="text-center relative">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center mx-auto mb-6 text-2xl font-bold relative z-10">
+                        2
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Promote & Sell</h3>
+                    <p class="text-gray-400">
+                        Share your event on social media, send invitations, and start selling tickets.
+                    </p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="text-center relative">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center mx-auto mb-6 text-2xl font-bold relative z-10">
+                        3
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Host & Analyze</h3>
+                    <p class="text-gray-400">
+                        Manage check-ins, engage attendees, and review detailed analytics.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="inline-block px-4 py-1 rounded-full glass-card text-primary-400 text-sm font-medium mb-4">
+                    Pricing Plans
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                    Choose Your <span class="gradient-text">Perfect Plan</span>
+                </h2>
+                <p class="text-gray-400 text-lg">
+                    Flexible pricing for events of all sizes. Start free and scale as you grow.
+                </p>
+                <p id="pricingAuthHint" class="text-yellow-300 text-base mt-3 hidden">
+                    Sign in to choose your perfect plan and start your free trial.
+                </p>
+            </div>
+
+            <!-- Pricing Toggle -->
+            <div class="flex items-center justify-center mb-12">
+                <span class="text-gray-400 mr-3">Monthly</span>
+                <button id="pricingToggle" class="relative w-14 h-7 rounded-full bg-primary-600 transition-colors">
+                    <span class="absolute top-1 left-1 w-5 h-5 rounded-full bg-white transition-transform"></span>
+                </button>
+                <span class="text-gray-400 ml-3">Annual <span class="text-primary-400">(Save 20%)</span></span>
+            </div>
+
+            <!-- Pricing Cards -->
+            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <!-- Free Plan -->
+                <div class="glass-card rounded-3xl p-8 hover-lift" data-month-price="$0" data-annual-price="$0">
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-bold mb-2">Starter</h3>
+                        <p class="text-gray-400 text-sm">Perfect for small events</p>
+                        <div class="mt-6">
+                            <span class="text-5xl font-bold plan-price">$0</span>
+                            <span class="text-gray-400 plan-billing">/month</span>
+                        </div>
+                    </div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Up to 50 attendees</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">1 event per month</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Basic analytics</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Email support</span>
+                        </li>
+                        <li class="flex items-center text-gray-500">
+                            <i class="fas fa-times mr-3"></i>
+                            <span>Custom branding</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 rounded-xl border border-white/20 font-semibold hover:bg-white/10 transition-colors" data-open-modal="paymentModal" data-plan="starter">
+                        Start Free Trial
+                    </button>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="glass-card rounded-3xl p-8 hover-lift relative border-2 border-primary-500" data-month-price="$49" data-annual-price="$39">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <span class="px-4 py-1 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full text-sm font-semibold">
+                            Most Popular
+                        </span>
+                    </div>
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-bold mb-2">Professional</h3>
+                        <p class="text-gray-400 text-sm">For growing organizers</p>
+                        <div class="mt-6">
+                            <span class="text-5xl font-bold plan-price">$49</span>
+                            <span class="text-gray-400 plan-billing">/month</span>
+                        </div>
+                    </div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Up to 500 attendees</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Unlimited events</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Advanced analytics</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Priority support</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Custom branding</span>
+                        </li>
+                    </ul>
+                    <button class="w-full btn-primary py-3 rounded-xl font-semibold" data-open-modal="paymentModal" data-plan="professional">
+                        Start Free Trial
+                    </button>
+                </div>
+
+                <!-- Enterprise Plan -->
+                <div class="glass-card rounded-3xl p-8 hover-lift" data-month-price="$199" data-annual-price="$159">
+                    <div class="text-center mb-8">
+                        <h3 class="text-xl font-bold mb-2">Enterprise</h3>
+                        <p class="text-gray-400 text-sm">For large organizations</p>
+                        <div class="mt-6">
+                            <span class="text-5xl font-bold plan-price">$199</span>
+                            <span class="text-gray-400 plan-billing">/month</span>
+                        </div>
+                    </div>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Unlimited attendees</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Unlimited events</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Custom integrations</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Dedicated manager</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-400 mr-3"></i>
+                            <span class="text-gray-300">SLA guarantee</span>
+                        </li>
+                    </ul>
+                    <button class="w-full py-3 rounded-xl border border-white/20 font-semibold hover:bg-white/10 transition-colors" data-open-modal="paymentModal" data-plan="enterprise">
+                        Start Free Trial
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Section Header -->
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="inline-block px-4 py-1 rounded-full glass-card text-primary-400 text-sm font-medium mb-4">
+                    Testimonials
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                    Loved by <span class="gradient-text">Event Organizers</span>
+                </h2>
+            </div>
+
+            <!-- Testimonials Grid -->
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Testimonial 1 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift">
+                    <div class="flex items-center mb-4">
+                        <div class="flex text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mb-6">
+                        "EventFlow transformed how we manage our annual conference. The analytics alone saved us countless hours of manual work."
+                    </p>
+                    <div class="flex items-center">
+                        <img src="https://i.pravatar.cc/50?img=11" alt="Sarah" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <div class="font-semibold">Sarah Johnson</div>
+                            <div class="text-sm text-gray-400">Marketing Director, TechCorp</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift">
+                    <div class="flex items-center mb-4">
+                        <div class="flex text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mb-6">
+                        "The best event platform we've ever used. Ticket sales increased by 40% after switching to EventFlow."
+                    </p>
+                    <div class="flex items-center">
+                        <img src="https://i.pravatar.cc/50?img=12" alt="Michael" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <div class="font-semibold">Michael Chen</div>
+                            <div class="text-sm text-gray-400">Event Manager, MusicFest</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="glass-card rounded-3xl p-8 hover-lift">
+                    <div class="flex items-center mb-4">
+                        <div class="flex text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mb-6">
+                        "Incredible support team and an intuitive platform. Our attendees love the seamless registration experience."
+                    </p>
+                    <div class="flex items-center">
+                        <img src="https://i.pravatar.cc/50?img=13" alt="Emily" class="w-12 h-12 rounded-full mr-4">
+                        <div>
+                            <div class="font-semibold">Emily Rodriguez</div>
+                            <div class="text-sm text-gray-400">CEO, StartupHub</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="relative py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Contact Info -->
+                <div>
+                    <span class="inline-block px-4 py-1 rounded-full glass-card text-primary-400 text-sm font-medium mb-4">
+                        Get In Touch
+                    </span>
+                    <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                        Let's <span class="gradient-text">Connect</span>
+                    </h2>
+                    <p class="text-gray-400 text-lg mb-8">
+                        Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                    </p>
+
+                    <div class="space-y-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl glass-card flex items-center justify-center">
+                                <i class="fas fa-envelope text-primary-400"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-400">Email</div>
+                                <div class="font-semibold">hello@eventflow.com</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl glass-card flex items-center justify-center">
+                                <i class="fas fa-phone text-primary-400"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-400">Phone</div>
+                                <div class="font-semibold">+1 (555) 123-4567</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl glass-card flex items-center justify-center">
+                                <i class="fas fa-map-marker-alt text-primary-400"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-400">Address</div>
+                                <div class="font-semibold">123 Event Street, San Francisco, CA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="flex space-x-4 mt-8">
+                        <a href="#" class="w-12 h-12 rounded-xl glass-card flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="w-12 h-12 rounded-xl glass-card flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fab fa-linkedin-in text-xl"></i>
+                        </a>
+                        <a href="#" class="w-12 h-12 rounded-xl glass-card flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="#" class="w-12 h-12 rounded-xl glass-card flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="glass-card rounded-3xl p-8">
+                    <form id="contactForm" class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">First Name</label>
+                                <input id="contactFirstName" name="firstName" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="John" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Last Name</label>
+                                <input id="contactLastName" name="lastName" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Doe" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Email</label>
+                            <input id="contactEmail" name="email" type="email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="john@example.com" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Subject</label>
+                            <select id="contactSubject" name="subject" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all">
+                                <option value="">Select a topic</option>
+                                <option value="general">General Inquiry</option>
+                                <option value="support">Technical Support</option>
+                                <option value="sales">Sales Question</option>
+                                <option value="partnership">Partnership</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Message</label>
+                            <textarea id="contactMessage" name="message" rows="4" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all resize-none" placeholder="Your message..." required></textarea>
+                        </div>
+                        <button type="submit" class="w-full btn-primary py-4 rounded-xl font-semibold text-lg">
+                            Send Message <i class="fas fa-paper-plane ml-2"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative py-16 border-t border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
+                <!-- Brand -->
+                <div class="lg:col-span-2">
+                    <a href="index.html" class="flex items-center space-x-3 navbar-brand">
+                        <div class="navbar-logo">
+                           <img src="logo.png" alt="Datoway Technology">
+                        </div>
+                        <span class="text-2xl font-bold gradient-text">EventFlow</span>
+                    </a>
+                    <p class="text-gray-400 mb-6 max-w-sm">
+                        The modern event management platform that helps you create, manage, and grow unforgettable events.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 rounded-lg glass-card flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-lg glass-card flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-lg glass-card flex items-center justify-center hover:bg-white/10 transition-colors">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-semibold mb-4">Product</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#features" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
+                        <li><a href="#pricing" class="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Integrations</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">API</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4">Company</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">About</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Careers</a></li>
+                        <li><a href="#contact" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-semibold mb-4">Support</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Documentation</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Status</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Community</a></li>
+                        <li><a href="admin.html" class="text-gray-400 hover:text-white transition-colors">Admin Dashboard</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom Footer -->
+            <div class="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+                <p class="text-gray-400 text-sm">
+                    © 2024 EventFlow. All rights reserved.
+                </p>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
+                    <a href="#" class="text-gray-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/60" data-close-modal="loginModal"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card rounded-3xl p-8 max-w-md w-full animate-slide-up relative">
+                <button type="button" data-close-modal="loginModal" class="absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="text-2xl font-bold mb-6 text-center">Welcome Back</h2>
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input id="loginEmail" name="email" type="email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Enter your email">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input id="loginPassword" name="password" type="password" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Enter your password">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">First Name</label>
+                            <input id="loginFirstName" name="firstName" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="John">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Last Name</label>
+                            <input id="loginLastName" name="lastName" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Doe">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Username</label>
+                            <input id="loginUsername" name="username" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="johndoe">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Phone</label>
+                            <input id="loginPhone" name="phone" type="tel" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="+1 555 123 4567">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Location</label>
+                        <input id="loginLocation" name="location" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="City, Country">
+                    </div>
+                    <div class="flex items-center justify-between">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2 rounded">
+                                <span class="text-sm text-gray-400">Remember me</span>
+                            </label>
+                            <button type="button" data-close-modal="loginModal" data-open-modal="resetPasswordModal" class="text-sm text-primary-400 hover:underline">
+                                Forgot password?
+                            </button>
+                        </div>
+                    <button type="submit" class="w-full btn-primary py-3 rounded-xl font-semibold">
+                        Sign In
+                    </button>
+                </form>
+                <div class="mt-6 text-center">
+                    <span class="text-gray-400">Don't have an account?</span>
+                    <button type="button" data-close-modal="loginModal" data-open-modal="registerModal" class="text-primary-400 hover:underline ml-1">Sign up</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/60" data-close-modal="registerModal"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card rounded-3xl p-8 max-w-md w-full animate-slide-up relative">
+                <button type="button" data-close-modal="registerModal" class="absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
+                <form class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">First Name</label>
+                            <input id="registerFirstName" name="firstName" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="John">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Last Name</label>
+                            <input id="registerLastName" name="lastName" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Doe">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Username</label>
+                            <input id="registerUsername" name="username" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="johndoe">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Phone</label>
+                            <input id="registerPhone" name="phone" type="tel" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="+1 555 123 4567">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Location</label>
+                        <input id="registerLocation" name="location" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="City, Country">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input id="registerEmail" name="email" type="email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Enter your email">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input id="registerPassword" name="password" type="password" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Create a password">
+                    </div>
+                    <label class="flex items-start">
+                        <input id="registerTerms" name="termsAccepted" type="checkbox" class="mr-2 mt-1 rounded">
+                        <span class="text-sm text-gray-400">I agree to the <a href="#" class="text-primary-400 hover:underline">Terms of Service</a> and <a href="#" class="text-primary-400 hover:underline">Privacy Policy</a></span>
+                    </label>
+                    <button type="submit" class="w-full btn-primary py-3 rounded-xl font-semibold">
+                        Create Account
+                    </button>
+                </form>
+                <div class="mt-6 text-center">
+                    <span class="text-gray-400">Already have an account?</span>
+                    <button type="button" data-close-modal="registerModal" data-open-modal="loginModal" class="text-primary-400 hover:underline ml-1">Sign in</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetPasswordModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/60" data-close-modal="resetPasswordModal"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card rounded-3xl p-8 max-w-md w-full animate-slide-up relative">
+                <button type="button" data-close-modal="resetPasswordModal" class="absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="text-2xl font-bold mb-6 text-center">Reset Password</h2>
+                <p class="text-sm text-gray-400 mb-4">Enter your email and we will send you a password reset link.</p>
+                <form id="resetPasswordForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input id="resetPasswordEmail" name="email" type="email" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Enter your email" required>
+                    </div>
+                    <button type="submit" class="w-full btn-primary py-3 rounded-xl font-semibold">
+                        Send Reset Link
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal (used by Start Free Trial) -->
+    <div id="paymentModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/60" data-close-modal="paymentModal"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card rounded-3xl p-8 max-w-md w-full animate-slide-up relative">
+                <button type="button" data-close-modal="paymentModal" class="absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="text-2xl font-bold mb-4 text-center">Activate Free Trial</h2>
+                <div id="paymentPlanLabel" class="text-sm text-gray-300 mb-2"></div>
+                <p class="text-gray-400 text-sm mb-4">Choose a payment method to activate your free trial. Use the demo card for quick testing.</p>
+                <div id="paypalBarcode" class="mt-4 mb-4 hidden text-center">
+                    <div class="inline-block bg-white/5 p-4 rounded-xl">
+                        <img id="paymentQr" src="" alt="PhonePe QR" width="260" height="260" class="mx-auto rounded-md bg-white/5 p-2">
+                        <div class="text-xs text-gray-400 mt-2">Scan this QR with PhonePe or any UPI app to make the demo payment</div>
+                    </div>
+                </div>
+                
+                <form id="paymentForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Payment Method</label>
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center space-x-2"><input type="radio" name="paymentMethod" value="card" checked> <span>Card</span></label>
+                            <label class="flex items-center space-x-2"><input type="radio" name="paymentMethod" value="phonepay"> <span>PhonePe / UPI</span></label>
+                        </div>
+                    </div>
+
+                    <div id="cardFields">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Card Number</label>
+                            <input id="paymentCardNumber" name="cardNumber" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="4242 4242 4242 4242" value="4242 4242 4242 4242">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Expiry</label>
+                                <input id="paymentCardExpiry" name="expiry" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="12/34" value="12/34">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">CVC</label>
+                                <input id="paymentCardCvc" name="cvc" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="123" value="123">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-sm text-gray-400">Demo card: <strong>4242 4242 4242 4242</strong>, expiry <strong>12/34</strong>, CVC <strong>123</strong></div>
+
+                    <div class="pt-4">
+                        <button type="submit" class="w-full btn-primary py-3 rounded-xl font-semibold">Pay & Activate Trial</button>
+                    </div>
+                </form>
+                <div class="mt-4 text-center text-gray-400 text-sm">You can create an account later to save your trial.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Event Modal -->
+    <div id="createEventModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/60" data-close-modal="createEventModal"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card rounded-3xl p-8 max-w-2xl w-full animate-slide-up relative max-h-[90vh] overflow-y-auto">
+                <button type="button" data-close-modal="createEventModal" class="absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="text-2xl font-bold mb-6">Create New Event</h2>
+                <form id="createEventForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Event Name *</label>
+                        <input id="eventName" name="title" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Enter event name" required>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Date *</label>
+                            <input id="eventDate" name="date" type="date" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Time *</label>
+                            <input id="eventTime" name="time" type="time" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Location</label>
+                        <input id="eventLocation" name="location" type="text" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Enter venue or 'Online'">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Category</label>
+                        <select id="eventCategory" name="category" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all">
+                            <option value="conference">Conference</option>
+                            <option value="music">Music</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="sports">Sports</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Description</label>
+                        <textarea id="eventDescription" name="description" rows="4" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all resize-none" placeholder="Describe your event..."></textarea>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Ticket Price ($)</label>
+                            <input id="ticketPrice" name="ticketPrice" type="number" min="0" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="0 for free">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Max Attendees</label>
+                            <input id="maxAttendees" name="maxAttendees" type="number" min="1" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" placeholder="Unlimited">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Event Image</label>
+                        <div class="border-2 border-dashed border-white/20 rounded-xl p-8 text-center hover:border-primary-500 transition-colors cursor-pointer" data-upload-wrapper>
+                            <img data-upload-preview class="hidden w-full h-48 object-cover rounded-lg mb-4" alt="Selected event preview">
+                            <i data-upload-placeholder class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                            <p data-upload-text class="text-gray-400">Drop your image here or click to upload</p>
+                            <input id="eventImageInput" type="file" class="hidden" accept="image/*">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full btn-primary py-4 rounded-xl font-semibold text-lg">
+                        Create Event <i class="fas fa-plus ml-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Detail Modal -->
+    <div id="eventDetailModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/60" data-close-modal="eventDetailModal"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card rounded-3xl max-w-3xl w-full animate-slide-up relative max-h-[90vh] overflow-y-auto">
+                <button type="button" data-close-modal="eventDetailModal" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center transition-colors hover:bg-black/70">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <img id="eventDetailImage" src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop" alt="Event" class="w-full h-64 object-cover rounded-t-3xl">
+                
+                <div class="p-8">
+                    <div class="flex items-start justify-between mb-6">
+                        <div>
+                            <span id="eventDetailCategory" class="px-3 py-1 bg-primary-500 rounded-full text-sm font-medium">Conference</span>
+                            <h2 id="eventDetailTitle" class="text-3xl font-bold mt-3">Event Title</h2>
+                        </div>
+                        <button class="w-12 h-12 rounded-full glass-card flex items-center justify-center hover:bg-white/20 transition-colors bookmark-btn">
+                            <i class="far fa-heart text-xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6 mb-8">
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-lg glass-card flex items-center justify-center mr-3">
+                                    <i class="fas fa-calendar text-primary-400"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-400">Date</div>
+                                    <div id="eventDetailDate" class="font-semibold">Date to be announced</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-lg glass-card flex items-center justify-center mr-3">
+                                    <i class="fas fa-clock text-primary-400"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-400">Time</div>
+                                    <div id="eventDetailTime" class="font-semibold">Time to be announced</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-lg glass-card flex items-center justify-center mr-3">
+                                    <i class="fas fa-map-marker-alt text-accent-400"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-400">Location</div>
+                                    <div id="eventDetailLocation" class="font-semibold">Location to be announced</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-lg glass-card flex items-center justify-center mr-3">
+                                    <i class="fas fa-users text-green-400"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-400">Attendees</div>
+                                    <div id="eventDetailAttendees" class="font-semibold">Registration details will appear here</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold mb-3">About This Event</h3>
+                        <p id="eventDetailDescription" class="text-gray-400 leading-relaxed">
+                            Event description will be displayed here.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center justify-between p-6 glass-card rounded-2xl">
+                        <div>
+                            <div class="text-sm text-gray-400">Ticket Price</div>
+                            <div id="eventDetailPrice" class="text-3xl font-bold gradient-text">$0</div>
+                        </div>
+                        <button type="button" class="btn-primary px-8 py-4 rounded-full font-semibold text-lg" data-open-modal="bookingModal">
+                            Book Now <i class="fas fa-ticket-alt ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/60" data-close-modal="profileModal"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card rounded-3xl max-w-xl w-full animate-slide-up relative max-h-[90vh] overflow-y-auto p-8">
+                <button type="button" data-close-modal="profileModal" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center transition-colors hover:bg-black/70">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="text-3xl font-bold mb-3">Your Profile</h2>
+                <p id="profileEmail" class="text-gray-400 mb-6">Email goes here</p>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="glass-card rounded-3xl p-6">
+                        <h3 class="text-sm uppercase tracking-[0.2em] text-gray-400 mb-2">Username</h3>
+                        <p id="profileUsername" class="text-xl font-semibold">Not available</p>
+                    </div>
+                    <div class="glass-card rounded-3xl p-6">
+                        <h3 class="text-sm uppercase tracking-[0.2em] text-gray-400 mb-2">Phone</h3>
+                        <p id="profilePhone" class="text-xl font-semibold">Not available</p>
+                    </div>
+                    <div class="glass-card rounded-3xl p-6">
+                        <h3 class="text-sm uppercase tracking-[0.2em] text-gray-400 mb-2">Location</h3>
+                        <p id="profileLocation" class="text-xl font-semibold">Not available</p>
+                    </div>
+                    <div class="glass-card rounded-3xl p-6">
+                        <h3 class="text-sm uppercase tracking-[0.2em] text-gray-400 mb-2">Member Since</h3>
+                        <p id="profileMemberSince" class="text-xl font-semibold">Date</p>
+                    </div>
+                    <div class="glass-card rounded-3xl p-6">
+                        <h3 class="text-sm uppercase tracking-[0.2em] text-gray-400 mb-2">Plan</h3>
+                        <p id="profilePlan" class="text-xl font-semibold">Free</p>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-3">
+                    <button type="button" data-close-modal="profileModal" class="px-6 py-3 rounded-xl border border-white/20 font-semibold hover:bg-white/10 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/60" data-close-modal="bookingModal"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="glass-card rounded-3xl max-w-2xl w-full animate-slide-up relative max-h-[90vh] overflow-y-auto">
+                <button type="button" data-close-modal="bookingModal" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center transition-colors hover:bg-black/70">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <h2 class="text-2xl font-bold mb-2">Book Tickets</h2>
+                <p id="bookingEventSummary" class="text-gray-400 mb-6">Enter your details to confirm booking.</p>
+
+                <form id="bookingForm" class="space-y-6">
+                    <input id="bookingEventId" type="hidden" />
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Attendee Name *</label>
+                            <input id="bookingAttendeeName" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" type="text" placeholder="John Doe" required />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Attendee Email *</label>
+                            <input id="bookingAttendeeEmail" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" type="email" placeholder="john@example.com" required />
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Ticket Quantity</label>
+                            <input id="bookingTicketQuantity" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" type="number" min="1" value="1" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Total Price</label>
+                            <div id="bookingTotalPrice" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white">$0</div>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium mb-2">Card Number *</label>
+                            <input id="bookingCardNumber" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" type="text" inputmode="numeric" placeholder="4242 4242 4242 4242" required />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Expiry *</label>
+                            <input id="bookingCardExpiry" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" type="text" placeholder="12/34" required />
+                        </div>
+                        <div class="md:col-span-1">
+                            <label class="block text-sm font-medium mb-2">CVC *</label>
+                            <input id="bookingCardCvc" class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary-500 focus:outline-none input-glow transition-all" type="text" inputmode="numeric" placeholder="123" required />
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-2">
+                        <button type="button" data-close-modal="bookingModal" class="px-6 py-3 rounded-xl border border-white/20 font-semibold hover:bg-white/10 transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn-primary px-8 py-3 rounded-xl font-semibold">
+                            Confirm Booking
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 right-8 z-50 hidden">
+        <div class="glass-card rounded-xl px-6 py-4 flex items-center space-x-3 animate-slide-up">
+            <div id="toastIcon" class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                <i class="fas fa-check"></i>
+            </div>
+            <span id="toastMessage">Action completed successfully!</span>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
