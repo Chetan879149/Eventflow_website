@@ -1,0 +1,321 @@
+(This file should be generated as a DOCX. If DOCX generation is not supported in this environment, provide the text below as a .doc file or .pdf.)
+
+EventFlow Website – Technology & Features Report
+
+1. Introduction
+EventFlow is a web application for event management. Users can register, sign in, create events, browse and filter event cards, send contact messages, mark favorites, and book tickets. An admin dashboard is also available to view and manage database records.
+
+This report documents:
+- Technologies and tools used (frontend + backend)
+- Libraries/packages installed via npm
+- APIs and external services used
+- Database approach (SQLite)
+- Security and implementation techniques
+- Major website features included
+
+2. Technologies Used (High-Level)
+2.1 Frontend Technologies
+A) HTML (index.html)
+- Structure of the pages
+- Modal dialogs (login/register/reset password/payment/create event/event detail/booking/profile)
+
+B) CSS
+- Custom styles: style.css
+- UI theme: glassmorphism look using custom CSS + Tailwind utility classes
+
+C) JavaScript (client-side logic)
+- File: script.js
+- Responsibilities:
+  - Handle button/modal interactions
+  - Capture form inputs
+  - Call backend APIs with fetch()
+  - Render event cards from API response
+  - Show toast notifications
+  - Handle user auth UI state using localStorage
+
+D) Tailwind CSS (CDN)
+- Included using CDN:
+  - https://cdn.tailwindcss.com
+- Used for fast UI styling with utility classes.
+
+E) Font Awesome (CDN)
+- Included using CDN:
+  - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css
+- Provides icons for calendar, user, ticket, social icons, etc.
+
+2.2 Backend Technologies
+A) Node.js
+- Runs the server application.
+
+B) Express.js
+- File: server.js
+- Creates REST endpoints under /api/
+
+C) SQLite (embedded database)
+- File: eventflow.db (created automatically)
+- SQLite is used to store persistent app data.
+
+D) bcrypt
+- Password hashing for user security.
+
+E) crypto (Node.js)
+- Generates secure random session tokens and password reset tokens.
+
+F) nodemailer
+- Sends password reset emails via SMTP (only when SMTP env variables are configured).
+
+2.3 Admin Dashboard Frontend
+- File: admin.html
+- File: admin.js
+- Functionality:
+  - Fetch stats from /api/admin/stats
+  - Fetch records from /api/admin/records?table=...
+  - Edit and delete records via PATCH/DELETE calls
+
+3. npm Packages / Dependencies
+The project uses the following dependencies (from package.json):
+- express (^4.21.2)
+- better-sqlite3 (^11.10.0)
+- bcrypt (^5.1.1)
+- nodemailer (^7.0.0)
+
+4. External Resources / “Extensions” Used
+4.1 Tailwind CSS CDN
+- Provides utility-first styling.
+
+4.2 Font Awesome CDN
+- Provides icon set.
+
+4.3 Google Chart (optional for demo QR)
+- In payment modal, a QR code image URL is generated:
+  - https://chart.googleapis.com/chart?chs=260x260&cht=qr&chl=...&chld=L|1
+- Used only for demo QR display.
+
+4.4 Image Sources
+- Event cards use Unsplash image URLs.
+- Profile/avatar examples use i.pravatar.cc.
+
+5. API Endpoints (Backend Routes)
+Main endpoints implemented in server.js:
+
+Authentication
+- POST /api/auth/register
+  - Body: firstName, lastName, email, password
+  - Validates required fields
+  - Normalizes email
+  - Checks duplicate email
+  - Hashes password and stores user
+
+- POST /api/auth/login
+  - Body: email, password
+  - Verifies credentials
+  - Creates a session token
+  - Stores session in SQLite
+  - Returns token + user info
+
+- POST /api/auth/forgot-password
+  - Body: email
+  - If user exists: generates reset token + sends email
+  - Always returns generic success message (prevents account existence leaks)
+
+- POST /api/auth/reset-password
+  - Body: token, newPassword
+  - Validates token and expiry
+  - Hashes new password
+  - Updates user and consumes reset token
+
+Contact
+- POST /api/contact
+  - Body: firstName, lastName, email, subject, message
+  - Stores in contacts table
+
+Events & User Activities
+- POST /api/events
+  - Body: title, date, time, location, category, description, ticketPrice, maxAttendees, imagePath
+  - Creates an event row
+
+- GET /api/events
+  - Returns saved events joined with organizer user data
+
+- POST /api/bookings
+  - Body: eventId, attendeeName, attendeeEmail, ticketQuantity, totalPrice, userId
+  - Stores booking in bookings table
+
+- POST /api/favorites
+  - Body: userId, eventId
+  - Uses INSERT OR IGNORE to prevent duplicates
+
+Subscriptions (Plans)
+- POST /api/subscription
+  - Body: userId, plan, price
+  - Stores the plan selection
+
+- GET /api/subscription/:userId
+  - Returns the most recent subscription record for the user
+
+Branding
+- POST /api/branding
+  - Body: userId, image (base64)
+  - Saves branding image in users.branding_image
+
+- GET /api/branding/:userId
+  - Retrieves branding image
+
+Admin
+- GET /api/admin/stats
+  - Counts rows in core tables
+
+- GET /api/admin/records?table=users|events|...
+  - Returns requested table rows
+
+- PATCH /api/admin/records/:table/:id
+  - Updates editable columns
+  - Special handling for users password
+
+- DELETE /api/admin/records/:table/:id
+  - Deletes a record from allowed tables
+
+6. Database Design (SQLite Schema)
+The database is created via schemaSql in server.js.
+Tables included:
+
+- users
+  - id (PK)
+  - first_name, last_name, email (unique)
+  - password_hash
+  - branding_image (added via ALTER TABLE if missing)
+  - created_at
+
+- events
+  - id (PK)
+  - user_id (FK -> users)
+  - title, event_date, event_time, location, category
+  - description
+  - ticket_price, max_attendees
+  - image_path
+  - created_at
+
+- contacts
+  - stores contact form messages
+
+- bookings
+  - attendee_name, attendee_email
+  - ticket_quantity, total_price
+  - status (default: confirmed)
+
+- favorites
+  - unique(user_id, event_id)
+
+- sessions
+  - user_id, session_token (unique), expires_at
+
+- password_resets
+  - user_id, token (unique), expires_at
+
+- subscriptions
+  - user_id, plan, price, started_at
+
+7. Working of Key Techniques (How the System Works)
+7.1 Frontend → Backend Communication
+- The frontend sends JSON payloads using fetch():
+  - fetch(url, { method, headers, body: JSON.stringify(payload) })
+- Backend returns JSON responses.
+- Frontend handles response errors by reading response JSON error/message.
+
+7.2 Authentication & Sessions (Local Session Token)
+- Registration stores hashed passwords using bcrypt.
+- Login verifies credentials and returns a random session token.
+- The frontend stores:
+  - localStorage eventflow-session = token
+  - localStorage eventflow-user = user profile
+- UI changes based on whether a user exists in localStorage.
+
+7.3 Password Security
+- bcrypt hashes passwords before saving.
+- During login:
+  - bcrypt.compare() compares plaintext password to stored hash.
+
+7.4 Password Reset Flow
+- Generates secure reset tokens with crypto.
+- Stores tokens in password_resets table with expires_at.
+- Sends an email with the reset link (using nodemailer).
+- Reset endpoint updates password and consumes the token (single-use).
+
+7.5 Database Persistence
+- SQLite database file eventflow.db is stored on disk.
+- Data remains after page refresh and server restarts (depending on database file).
+
+8. Website Features Implemented
+8.1 User Features
+- Sign up / Create Account
+  - Collects name/email/password
+  - Validates required fields and terms acceptance
+  - Creates a new SQLite user
+
+- Sign in / Login
+  - Validates credentials
+  - Generates session token
+  - Updates navbar/profile UI state
+
+- Logout
+  - Clears localStorage auth state
+
+- Password Reset
+  - Forgot password modal
+  - Sends reset email (when SMTP configured)
+  - Reset modal uses token from URL
+
+8.2 Event Features
+- Event browsing
+  - Event cards shown on the homepage
+
+- Filtering
+  - Filter buttons by category (conference/music/workshop/sports)
+
+- Event details modal
+  - Populates event detail fields
+
+- Create Event
+  - Modal form collects event fields
+  - Sends to POST /api/events
+
+8.3 Booking Features
+- Booking modal
+  - Captures attendee name/email + ticket quantity
+  - Calculates total price
+  - Demo payment simulation activates trial (demo flow)
+  - Saves booking to /api/bookings
+
+8.4 Favorites Features
+- Favorite/Unfavorite buttons
+- Backend stores favorites with duplicate protection (INSERT OR IGNORE)
+
+8.5 Admin Dashboard Features
+- Admin stats overview (counts of records)
+- Table view for:
+  - users, events, contacts, bookings, favorites, sessions
+- Edit record (PATCH)
+- Delete record (DELETE)
+
+9. API Key / Credentials Used
+9.1 Demo payment key (frontend constant)
+The code contains:
+- FREE_PAYMENT_API_KEY = 'pk_test_eventflow_free_demo'
+Note: This is a demo/testing key for UI/payment simulation.
+
+9.2 SMTP configuration for password reset emails
+The backend supports sending emails if environment variables are configured:
+- SMTP_HOST
+- SMTP_PORT
+- SMTP_SECURE (true/false)
+- SMTP_USER
+- SMTP_PASS
+- SMTP_FROM (optional)
+
+Security note: credentials must be stored in environment variables (not hardcoded) for real deployments.
+
+10. Conclusion
+EventFlow combines a modern frontend UI (Tailwind + Font Awesome + modals + JavaScript) with a Node.js/Express backend, SQLite persistence, and secure password hashing via bcrypt. It also includes optional email-based password reset and a complete admin dashboard for monitoring and managing stored data.
+
+End of Report
+
